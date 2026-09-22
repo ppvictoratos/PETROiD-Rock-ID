@@ -30,10 +30,10 @@ struct RockSpecies {
     ]
 
     static func identify() -> RockSpecies {
-        catalog.randomElement()!
+        catalog.randomElement() ?? RockSpecies(name: "Granite", mohsMin: 6, mohsMax: 7)
     }
 
     static func randomOpponent() -> RockSpecies {
-        catalog.randomElement()!
+        catalog.randomElement() ?? RockSpecies(name: "Basalt", mohsMin: 5, mohsMax: 6)
     }
 }

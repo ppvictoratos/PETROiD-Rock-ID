@@ -18,6 +18,10 @@ struct ContentView: View {
     @State private var isBattling = false
     @State private var battleResult: BattleResult?
 
+    private let identifyingDelay: TimeInterval = 1.6
+    private let battleDelay: TimeInterval = 0.5
+    private let imageCompressionQuality: Double = 0.8
+
     private var stagedRock: Rock? {
         rocks.first { $0.id == stagedRockID }
     }
@@ -196,9 +200,13 @@ struct ContentView: View {
         pendingImage = image
         isIdentifying = true
         Task {
-            try? await Task.sleep(for: .seconds(1.6))
+            try? await Task.sleep(for: .seconds(identifyingDelay))
             let species = RockSpecies.identify()
-            let imageData = image.jpegData(compressionQuality: 0.8) ?? Data()
+            guard let imageData = image.jpegData(compressionQuality: imageCompressionQuality) else {
+                isIdentifying = false
+                pendingImage = nil
+                return
+            }
             let rock = Rock(
                 name: species.name,
                 mohsMin: species.mohsMin,
@@ -219,7 +227,7 @@ struct ContentView: View {
         guard let playerRock = stagedRock else { return }
         isBattling = true
         Task {
-            try? await Task.sleep(for: .seconds(0.5))
+            try? await Task.sleep(for: .seconds(battleDelay))
             let opponent = RockSpecies.randomOpponent()
             let playerWon = playerRock.hardnessValue == opponent.hardnessValue
                 ? Bool.random()

@@ -8,31 +8,63 @@
 import XCTest
 @testable import PETROiD_Rock_ID
 
+// MARK: - Test Fixtures
+
+extension Rock {
+    static func fixture(
+        name: String = "Test Rock",
+        mohsMin: Double = 5,
+        mohsMax: Double = 6,
+        imageData: Data = Data(),
+        wins: Int = 0
+    ) -> Rock {
+        Rock(
+            name: name,
+            mohsMin: mohsMin,
+            mohsMax: mohsMax,
+            hardnessValue: (mohsMin + mohsMax) / 2,
+            imageData: imageData,
+            wins: wins
+        )
+    }
+}
+
 final class PETROiD_Rock_IDTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    func testRockHardnessLabel() {
+        let rock = Rock(name: "Granite", mohsMin: 6, mohsMax: 7, hardnessValue: 6.5, imageData: Data())
+        XCTAssertEqual(rock.hardnessLabel, "6-7")
+
+        let homogeneous = Rock(name: "Diamond", mohsMin: 10, mohsMax: 10, hardnessValue: 10, imageData: Data())
+        XCTAssertEqual(homogeneous.hardnessLabel, "10")
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
+    func testRockSpeciesCatalog() {
+        XCTAssertGreaterThan(RockSpecies.catalog.count, 0, "Catalog must not be empty")
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
-        // XCTest Documentation
-        // https://developer.apple.com/documentation/xctest
-    }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        for species in RockSpecies.catalog {
+            XCTAssertFalse(species.name.isEmpty)
+            XCTAssertGreaterThanOrEqual(species.mohsMin, 1)
+            XCTAssertLessThanOrEqual(species.mohsMax, 10)
+            XCTAssertGreaterThanOrEqual(species.mohsMax, species.mohsMin)
         }
+    }
+
+    func testRockSpeciesIdentify() {
+        let species = RockSpecies.identify()
+        XCTAssertTrue(RockSpecies.catalog.contains { $0.name == species.name })
+    }
+
+    func testBattleResultCreation() {
+        let result = BattleResult(
+            playerName: "Granite",
+            playerHardnessLabel: "6-7",
+            opponentName: "Basalt",
+            opponentHardnessLabel: "5-6",
+            playerWon: true
+        )
+        XCTAssertEqual(result.playerName, "Granite")
+        XCTAssertTrue(result.playerWon)
     }
 
 }
