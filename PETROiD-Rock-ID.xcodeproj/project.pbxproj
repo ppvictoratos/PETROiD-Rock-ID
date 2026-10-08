@@ -6,6 +6,21 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		99220F21006E57729BD75975 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 29421D143D330963AC11054E /* ComposableArchitecture */; };
+		2CE092A8CAAD51B9F87FE6F6 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 29421D143D330963AC11054E /* ComposableArchitecture */; };
+		80D6AC0EB3BDC18AE62DEBB5 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 8F001FCE62C4F3FDB55965D2 /* Dependencies */; };
+		46744CF822C0EBE69DB1D5B0 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 8F001FCE62C4F3FDB55965D2 /* Dependencies */; };
+		7CC2FE1778D8D5023E0EFA42 /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = F510581328DADCE2C0B4B3E0 /* CasePaths */; };
+		1370A43664C886668F09E851 /* CasePaths in Frameworks */ = {isa = PBXBuildFile; productRef = F510581328DADCE2C0B4B3E0 /* CasePaths */; };
+		BF683EDA957F3BD1286A3054 /* IdentifiedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 365F5DCB14DEDA20EA0982EE /* IdentifiedCollections */; };
+		52EBE8E53BA97C2AE506BEF5 /* IdentifiedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 365F5DCB14DEDA20EA0982EE /* IdentifiedCollections */; };
+		2E5FF530C1ECD2E3B1311A06 /* IssueReporting in Frameworks */ = {isa = PBXBuildFile; productRef = FB17B3658EBBEF7188C719A9 /* IssueReporting */; };
+		D5F00592113A592D5520D5C9 /* IssueReporting in Frameworks */ = {isa = PBXBuildFile; productRef = FB17B3658EBBEF7188C719A9 /* IssueReporting */; };
+		D0E9769FB108634167463456 /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = 988D7E1613E997583350E629 /* Clocks */; };
+		A2374E37ECAEEC066EB981BD /* Clocks in Frameworks */ = {isa = PBXBuildFile; productRef = 988D7E1613E997583350E629 /* Clocks */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1A8F1C31305CE61000F8F90E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -51,11 +66,23 @@
 		1A8F1C1E305CE60F00F8F90E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				99220F21006E57729BD75975 /* ComposableArchitecture in Frameworks */,
+				80D6AC0EB3BDC18AE62DEBB5 /* Dependencies in Frameworks */,
+				7CC2FE1778D8D5023E0EFA42 /* CasePaths in Frameworks */,
+				BF683EDA957F3BD1286A3054 /* IdentifiedCollections in Frameworks */,
+				2E5FF530C1ECD2E3B1311A06 /* IssueReporting in Frameworks */,
+				D0E9769FB108634167463456 /* Clocks in Frameworks */,
 			);
 		};
 		1A8F1C2D305CE61000F8F90E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				2CE092A8CAAD51B9F87FE6F6 /* ComposableArchitecture in Frameworks */,
+				46744CF822C0EBE69DB1D5B0 /* Dependencies in Frameworks */,
+				1370A43664C886668F09E851 /* CasePaths in Frameworks */,
+				52EBE8E53BA97C2AE506BEF5 /* IdentifiedCollections in Frameworks */,
+				D5F00592113A592D5520D5C9 /* IssueReporting in Frameworks */,
+				A2374E37ECAEEC066EB981BD /* Clocks in Frameworks */,
 			);
 		};
 		1A8F1C37305CE61000F8F90E /* Frameworks */ = {
@@ -103,6 +130,14 @@
 				1A8F1C23305CE60F00F8F90E /* PETROiD-Rock-ID */,
 			);
 			name = "PETROiD-Rock-ID";
+			packageProductDependencies = (
+				29421D143D330963AC11054E /* ComposableArchitecture */,
+				8F001FCE62C4F3FDB55965D2 /* Dependencies */,
+				F510581328DADCE2C0B4B3E0 /* CasePaths */,
+				365F5DCB14DEDA20EA0982EE /* IdentifiedCollections */,
+				FB17B3658EBBEF7188C719A9 /* IssueReporting */,
+				988D7E1613E997583350E629 /* Clocks */,
+			);
 			productName = "PETROiD-Rock-ID";
 			productReference = 1A8F1C21305CE60F00F8F90E /* PETROiD-Rock-ID.app */;
 			productType = "com.apple.product-type.application";
@@ -124,6 +159,14 @@
 				1A8F1C33305CE61000F8F90E /* PETROiD-Rock-IDTests */,
 			);
 			name = "PETROiD-Rock-IDTests";
+			packageProductDependencies = (
+				29421D143D330963AC11054E /* ComposableArchitecture */,
+				8F001FCE62C4F3FDB55965D2 /* Dependencies */,
+				F510581328DADCE2C0B4B3E0 /* CasePaths */,
+				365F5DCB14DEDA20EA0982EE /* IdentifiedCollections */,
+				FB17B3658EBBEF7188C719A9 /* IssueReporting */,
+				988D7E1613E997583350E629 /* Clocks */,
+			);
 			productName = "PETROiD-Rock-IDTests";
 			productReference = 1A8F1C30305CE61000F8F90E /* PETROiD-Rock-IDTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -181,6 +224,9 @@
 			);
 			mainGroup = 1A8F1C18305CE60F00F8F90E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1A8F1C22305CE60F00F8F90E /* Products */;
 			projectDirPath = "";
@@ -281,6 +327,7 @@
 				DEVELOPMENT_TEAM = 5R6CF59GRY;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				EAGER_LINKING = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -373,6 +420,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 5R6CF59GRY;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_DEBUG_DYLIB = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSCameraUsageDescription = "PETROiD needs camera access to scan and identify the rock in front of you.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PETROiD uses your photo library to identify a rock photo when a camera isn't available.";
@@ -390,7 +438,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -424,7 +471,6 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -552,6 +598,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+/* Begin XCRemoteSwiftPackageReference section */
+		10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.17.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		29421D143D330963AC11054E /* ComposableArchitecture */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = ComposableArchitecture;
+		};
+		8F001FCE62C4F3FDB55965D2 /* Dependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = Dependencies;
+		};
+		F510581328DADCE2C0B4B3E0 /* CasePaths */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = CasePaths;
+		};
+		365F5DCB14DEDA20EA0982EE /* IdentifiedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = IdentifiedCollections;
+		};
+		FB17B3658EBBEF7188C719A9 /* IssueReporting */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = IssueReporting;
+		};
+		988D7E1613E997583350E629 /* Clocks */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 10D838095D1C2C84D090F962 /* XCRemoteSwiftPackageReference "swift-composable-architecture" */;
+			productName = Clocks;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 	};
 	rootObject = 1A8F1C19305CE60F00F8F90E /* Project object */;
 	validationLevel = 1;

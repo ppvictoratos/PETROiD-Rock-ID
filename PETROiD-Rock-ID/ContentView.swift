@@ -3,28 +3,12 @@
 //  PETROiD-Rock-ID
 //
 
+import ComposableArchitecture
 import SwiftUI
-import SwiftData
 import UIKit
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Rock.dateAdded) private var rocks: [Rock]
-
-    @State private var stagedRockID: UUID?
-    @State private var isShowingCamera = false
-    @State private var isIdentifying = false
-    @State private var pendingImage: UIImage?
-    @State private var isBattling = false
-    @State private var battleResult: BattleResult?
-
-    private let identifyingDelay: TimeInterval = 1.6
-    private let battleDelay: TimeInterval = 0.5
-    private let imageCompressionQuality: Double = 0.8
-
-    private var stagedRock: Rock? {
-        rocks.first { $0.id == stagedRockID }
-    }
+    let store: StoreOf<RockBattleFeature>
 
     var body: some View {
         ZStack {
@@ -42,16 +26,33 @@ struct ContentView: View {
             }
             .padding(32)
 
-            if isIdentifying {
+            if store.isIdentifying {
                 identifyingOverlay
             }
         }
-        .fullScreenCover(isPresented: $isShowingCamera) {
-            CameraCaptureView(onCapture: handleCapture, onCancel: { isShowingCamera = false })
-                .ignoresSafeArea()
+        .onAppear { store.send(.onAppear) }
+        .fullScreenCover(
+            isPresented: Binding(
+                get: { store.isShowingCamera },
+                set: { store.send(.cameraPresented($0)) }
+            )
+        ) {
+            CameraCaptureView(
+                onCapture: { image in
+                    let imageData = image.jpegData(compressionQuality: RockBattleFeature.imageCompressionQuality) ?? Data()
+                    store.send(.photoCaptured(imageData))
+                },
+                onCancel: { store.send(.cameraPresented(false)) }
+            )
+            .ignoresSafeArea()
         }
-        .sheet(item: $battleResult) { result in
-            BattleResultView(result: result, onContinue: { battleResult = nil })
+        .sheet(
+            item: Binding(
+                get: { store.battleResult },
+                set: { if $0 == nil { store.send(.battleResultDismissed) } }
+            )
+        ) { result in
+            BattleResultView(result: result, onContinue: { store.send(.battleResultDismissed) })
         }
     }
 
@@ -68,18 +69,18 @@ struct ContentView: View {
 
     private var rosterGrid: some View {
         HStack(spacing: 12) {
-            ForEach(0..<3, id: \.self) { index in
+            ForEach(0..<RockBattleFeature.maxRocks, id: \.self) { index in
                 RockSlotView(
                     state: slotState(at: index),
                     isStaged: isStaged(at: index),
-                    action: { handleSlotTap(at: index) }
+                    action: { store.send(.slotTapped(index)) }
                 )
             }
         }
     }
 
     private var battleButton: some View {
-        Button(action: startBattle) {
+        Button(action: { store.send(.battleButtonTapped) }) {
             HStack(spacing: 12) {
                 Image(systemName: "figure.fencing")
                     .font(.system(size: 22, weight: .bold))
@@ -89,18 +90,18 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 22)
-            .foregroundStyle(stagedRock == nil ? Color.rockOnSurfaceVariant.opacity(0.5) : Color.rockBackground)
+            .foregroundStyle(store.stagedRock == nil ? Color.rockOnSurfaceVariant.opacity(0.5) : Color.rockBackground)
             .background(battleButtonBackground)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Color.rockPrimary.opacity(stagedRock == nil ? 0 : 0.25), radius: 30)
+            .shadow(color: Color.rockPrimary.opacity(store.stagedRock == nil ? 0 : 0.25), radius: 30)
         }
         .buttonStyle(PressableStyle())
-        .disabled(stagedRock == nil || isBattling)
+        .disabled(store.stagedRock == nil || store.isBattling)
     }
 
     @ViewBuilder
     private var battleButtonBackground: some View {
-        if stagedRock == nil {
+        if store.stagedRock == nil {
             Color.rockSurfaceVariant
         } else {
             LinearGradient(colors: [Color.rockPrimaryDim, Color.rockPrimary], startPoint: .leading, endPoint: .trailing)
@@ -114,7 +115,7 @@ struct ContentView: View {
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(Color.rockOnSurfaceVariant)
-                Text(stagedRock.map { "\($0.wins)" } ?? "—")
+                Text(store.stagedRock.map { "\($0.wins)" } ?? "—")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(Color.rockPrimary)
             }
@@ -128,7 +129,7 @@ struct ContentView: View {
                     .font(.system(size: 10, weight: .bold, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(Color.rockOnSurfaceVariant)
-                Text(stagedRock?.hardnessLabel ?? "—")
+                Text(store.stagedRock?.hardnessLabel ?? "—")
                     .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(Color.rockOnSurface)
             }
@@ -147,8 +148,8 @@ struct ContentView: View {
         ZStack {
             Color.black.opacity(0.6).ignoresSafeArea()
             VStack(spacing: 16) {
-                if let pendingImage {
-                    Image(uiImage: pendingImage)
+                if let pendingImageData = store.pendingImageData, let uiImage = UIImage(data: pendingImageData) {
+                    Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFill()
                         .frame(width: 140, height: 140)
@@ -171,9 +172,9 @@ struct ContentView: View {
     // MARK: - Slot logic
 
     private func slotState(at index: Int) -> RockSlotState {
-        if index < rocks.count {
-            return .filled(rocks[index])
-        } else if index == rocks.count {
+        if index < store.rocks.count {
+            return .filled(store.rocks[index])
+        } else if index == store.rocks.count {
             return .activeEmpty
         } else {
             return .locked
@@ -181,76 +182,14 @@ struct ContentView: View {
     }
 
     private func isStaged(at index: Int) -> Bool {
-        index < rocks.count && rocks[index].id == stagedRockID
-    }
-
-    private func handleSlotTap(at index: Int) {
-        if index < rocks.count {
-            let rock = rocks[index]
-            stagedRockID = (stagedRockID == rock.id) ? nil : rock.id
-        } else if index == rocks.count {
-            isShowingCamera = true
-        }
-    }
-
-    // MARK: - Scanning
-
-    private func handleCapture(_ image: UIImage) {
-        isShowingCamera = false
-        pendingImage = image
-        isIdentifying = true
-        Task {
-            try? await Task.sleep(for: .seconds(identifyingDelay))
-            let species = RockSpecies.identify()
-            guard let imageData = image.jpegData(compressionQuality: imageCompressionQuality) else {
-                isIdentifying = false
-                pendingImage = nil
-                return
-            }
-            let rock = Rock(
-                name: species.name,
-                mohsMin: species.mohsMin,
-                mohsMax: species.mohsMax,
-                hardnessValue: species.hardnessValue,
-                imageData: imageData
-            )
-            modelContext.insert(rock)
-            stagedRockID = rock.id
-            pendingImage = nil
-            isIdentifying = false
-        }
-    }
-
-    // MARK: - Battle
-
-    private func startBattle() {
-        guard let playerRock = stagedRock else { return }
-        isBattling = true
-        Task {
-            try? await Task.sleep(for: .seconds(battleDelay))
-            let opponent = RockSpecies.randomOpponent()
-            let playerWon = playerRock.hardnessValue == opponent.hardnessValue
-                ? Bool.random()
-                : playerRock.hardnessValue > opponent.hardnessValue
-
-            CrackSoundPlayer.shared.play()
-            if playerWon {
-                playerRock.wins += 1
-            }
-
-            battleResult = BattleResult(
-                playerName: playerRock.name,
-                playerHardnessLabel: playerRock.hardnessLabel,
-                opponentName: opponent.name,
-                opponentHardnessLabel: opponent.hardnessLabel,
-                playerWon: playerWon
-            )
-            isBattling = false
-        }
+        index < store.rocks.count && store.rocks[index].id == store.stagedRockID
     }
 }
 
 #Preview {
-    ContentView()
-        .modelContainer(for: Rock.self, inMemory: true)
+    ContentView(
+        store: Store(initialState: RockBattleFeature.State()) {
+            RockBattleFeature()
+        }
+    )
 }

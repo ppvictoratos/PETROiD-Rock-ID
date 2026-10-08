@@ -6,7 +6,8 @@
 import Foundation
 
 /// A field-guide entry used to simulate identification until a real classifier is wired in.
-struct RockSpecies {
+/// Random selection lives in `RockCatalogClient` so it's injectable in tests.
+struct RockSpecies: Equatable, Sendable {
     let name: String
     let mohsMin: Double
     let mohsMax: Double
@@ -28,12 +29,4 @@ struct RockSpecies {
         RockSpecies(name: "Pumice", mohsMin: 5, mohsMax: 6),
         RockSpecies(name: "Schist", mohsMin: 3, mohsMax: 4),
     ]
-
-    static func identify() -> RockSpecies {
-        catalog.randomElement() ?? RockSpecies(name: "Granite", mohsMin: 6, mohsMax: 7)
-    }
-
-    static func randomOpponent() -> RockSpecies {
-        catalog.randomElement() ?? RockSpecies(name: "Basalt", mohsMin: 5, mohsMax: 6)
-    }
 }

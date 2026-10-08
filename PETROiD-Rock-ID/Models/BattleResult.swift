@@ -5,8 +5,8 @@
 
 import Foundation
 
-struct BattleResult: Identifiable {
-    let id = UUID()
+struct BattleResult: Equatable, Identifiable, Sendable {
+    let id: UUID
     let playerName: String
     let playerHardnessLabel: String
     let opponentName: String

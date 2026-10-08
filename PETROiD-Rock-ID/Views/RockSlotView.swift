@@ -6,7 +6,7 @@
 import SwiftUI
 
 enum RockSlotState {
-    case filled(Rock)
+    case filled(RockRecord)
     case activeEmpty
     case locked
 }
@@ -42,7 +42,7 @@ struct RockSlotView: View {
         }
     }
 
-    private func filledContent(_ rock: Rock) -> some View {
+    private func filledContent(_ rock: RockRecord) -> some View {
         VStack(spacing: 8) {
             if let uiImage = UIImage(data: rock.imageData) {
                 Image(uiImage: uiImage)
