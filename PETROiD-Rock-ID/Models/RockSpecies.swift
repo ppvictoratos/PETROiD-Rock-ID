@@ -15,6 +15,11 @@ struct RockSpecies: Equatable, Sendable {
     var hardnessValue: Double { (mohsMin + mohsMax) / 2 }
     var hardnessLabel: String { formatHardness(min: mohsMin, max: mohsMax) }
 
+    /// Easter eggs. Mohs 1 sits below every catalog rock (lowest is Shale at 2-3), so these lose any
+    /// battle by the ordinary hardness rule — no special-casing in the reducer or the stored data.
+    static let homosapien = RockSpecies(name: "Homosapien", mohsMin: 1, mohsMax: 1)
+    static let scissors = RockSpecies(name: "Scissors", mohsMin: 1, mohsMax: 1)
+
     static let catalog: [RockSpecies] = [
         RockSpecies(name: "Granite", mohsMin: 6, mohsMax: 7),
         RockSpecies(name: "Basalt", mohsMin: 5, mohsMax: 6),

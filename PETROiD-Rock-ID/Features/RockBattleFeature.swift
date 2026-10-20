@@ -24,7 +24,9 @@ struct RockBattleFeature {
         var isShowingCamera = false
         var isIdentifying = false
         var pendingImageData: Data?
+        var isShowingNotARockAlert = false
         var isBattling = false
+        var isOpponentNearby = false
         var battleResult: BattleResult?
 
         var stagedRock: RockRecord? {
@@ -39,6 +41,9 @@ struct RockBattleFeature {
         case cameraPresented(Bool)
         case photoCaptured(Data)
         case identificationFinished(species: RockSpecies, imageData: Data, id: UUID, dateAdded: Date)
+        case nearbyUpdated(Bool)
+        case identificationRejected
+        case notARockAlertDismissed
         case battleButtonTapped
         case battleFinished(opponent: RockSpecies, playerWon: Bool, resultID: UUID)
         case battleResultDismissed
@@ -47,12 +52,15 @@ struct RockBattleFeature {
     private enum CancelID: Hashable {
         case identify
         case battle
+        case nearby
     }
 
     @Dependency(\.rockCatalog) var rockCatalog
     @Dependency(\.rockPersistence) var persistence
     @Dependency(\.battleCoin) var battleCoin
     @Dependency(\.soundClient) var soundClient
+    @Dependency(\.nearbyClient) var nearbyClient
+    @Dependency(\.imageClassifier) var imageClassifier
     @Dependency(\.continuousClock) var clock
     @Dependency(\.uuid) var uuid
     @Dependency(\.date) var date
@@ -61,10 +69,22 @@ struct RockBattleFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
-                return .run { send in
-                    let rocks = try await persistence.fetchAll()
-                    await send(.rocksLoaded(rocks))
-                }
+                return .merge(
+                    .run { send in
+                        let rocks = try await persistence.fetchAll()
+                        await send(.rocksLoaded(rocks))
+                    },
+                    .run { send in
+                        for await isNearby in nearbyClient.opponentPresence() {
+                            await send(.nearbyUpdated(isNearby))
+                        }
+                    }
+                    .cancellable(id: CancelID.nearby, cancelInFlight: true)
+                )
+
+            case let .nearbyUpdated(isNearby):
+                state.isOpponentNearby = isNearby
+                return .none
 
             case let .rocksLoaded(rocks):
                 state.rocks = IdentifiedArray(uniqueElements: rocks)
@@ -91,7 +111,15 @@ struct RockBattleFeature {
                 let capturedDate = date()
                 return .run { send in
                     try await clock.sleep(for: Self.identifyingDelay)
-                    let species = rockCatalog.identify()
+                    let species: RockSpecies
+                    switch await imageClassifier.classify(imageData) {
+                    case .rock: species = rockCatalog.identify()
+                    case .person: species = .homosapien
+                    case .scissors: species = .scissors
+                    case .notARock:
+                        await send(.identificationRejected)
+                        return
+                    }
                     await send(.identificationFinished(species: species, imageData: imageData, id: newID, dateAdded: capturedDate))
                 }
                 .cancellable(id: CancelID.identify)
@@ -113,8 +141,18 @@ struct RockBattleFeature {
                 state.isIdentifying = false
                 return .run { _ in try await persistence.insert(rock) }
 
+            case .identificationRejected:
+                state.pendingImageData = nil
+                state.isIdentifying = false
+                state.isShowingNotARockAlert = true
+                return .none
+
+            case .notARockAlertDismissed:
+                state.isShowingNotARockAlert = false
+                return .none
+
             case .battleButtonTapped:
-                guard let playerRock = state.stagedRock, !state.isBattling else { return .none }
+                guard let playerRock = state.stagedRock, state.isOpponentNearby, !state.isBattling else { return .none }
                 state.isBattling = true
                 let playerHardness = playerRock.hardnessValue
                 let resultID = uuid()

@@ -62,6 +62,29 @@ final class RockModelTests: XCTestCase {
     }
 }
 
+final class ImageClassificationTests: XCTestCase {
+    func testRocksLabelIsARock() {
+        XCTAssertEqual(ImageClassification(observations: [("rocks", 0.6), ("outdoor", 0.3)]), .rock)
+    }
+
+    func testPersonWinsOverWeakRockSignal() {
+        XCTAssertEqual(ImageClassification(observations: [("people", 0.9), ("rocks", 0.2)]), .person)
+    }
+
+    func testPersonHoldingRockCountsAsRockWhenRockIsStronger() {
+        XCTAssertEqual(ImageClassification(observations: [("people", 0.55), ("rocks", 0.8)]), .rock)
+    }
+
+    func testScissors() {
+        XCTAssertEqual(ImageClassification(observations: [("scissors", 0.7)]), .scissors)
+    }
+
+    func testUnrelatedPhotoIsNotARock() {
+        XCTAssertEqual(ImageClassification(observations: [("adult_cat", 0.9), ("rocks", 0.02)]), .notARock)
+        XCTAssertEqual(ImageClassification(observations: []), .notARock)
+    }
+}
+
 // MARK: - RockBattleFeature: exhaustive TestStore coverage
 //
 // Every dependency the reducer touches — clock, uuid, date, the rock catalog, the battle
@@ -134,6 +157,7 @@ final class RockBattleFeatureTests: XCTestCase {
             $0.continuousClock = clock
             $0.uuid = .constant(fixedID)
             $0.date = .constant(fixedDate)
+            $0.imageClassifier.classify = { _ in .rock }
             $0.rockCatalog.identify = { granite }
             $0.rockPersistence.insert = { _ in }
         }
@@ -168,6 +192,66 @@ final class RockBattleFeatureTests: XCTestCase {
         }
     }
 
+    private func identify(as classification: ImageClassification) async -> TestStore<RockBattleFeature.State, RockBattleFeature.Action> {
+        let clock = TestClock()
+        let store = TestStore(initialState: RockBattleFeature.State()) {
+            RockBattleFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.uuid = .constant(UUID(42))
+            $0.date = .constant(Date(timeIntervalSince1970: 1_000))
+            $0.imageClassifier.classify = { _ in classification }
+            $0.rockCatalog.identify = { granite }
+            $0.rockPersistence.insert = { _ in }
+        }
+        await store.send(.photoCaptured(Data([1]))) {
+            $0.isIdentifying = true
+            $0.pendingImageData = Data([1])
+        }
+        await clock.advance(by: RockBattleFeature.identifyingDelay)
+        return store
+    }
+
+    func testPersonPhotoIsLabeledHomosapien() async {
+        let store = await identify(as: .person)
+        await store.receive(\.identificationFinished) {
+            $0.isIdentifying = false
+            $0.pendingImageData = nil
+            $0.rocks = [RockRecord(id: UUID(42), name: "Homosapien", mohsMin: 1, mohsMax: 1, hardnessValue: 1,
+                                   imageData: Data([1]), wins: 0, dateAdded: Date(timeIntervalSince1970: 1_000))]
+            $0.stagedRockID = UUID(42)
+        }
+    }
+
+    func testScissorsPhotoIsLabeledScissors() async {
+        let store = await identify(as: .scissors)
+        await store.receive(\.identificationFinished) {
+            $0.isIdentifying = false
+            $0.pendingImageData = nil
+            $0.rocks = [RockRecord(id: UUID(42), name: "Scissors", mohsMin: 1, mohsMax: 1, hardnessValue: 1,
+                                   imageData: Data([1]), wins: 0, dateAdded: Date(timeIntervalSince1970: 1_000))]
+            $0.stagedRockID = UUID(42)
+        }
+    }
+
+    func testNonRockPhotoIsRejectedAndNotSaved() async {
+        let store = await identify(as: .notARock)
+        await store.receive(\.identificationRejected) {
+            $0.isIdentifying = false
+            $0.pendingImageData = nil
+            $0.isShowingNotARockAlert = true
+        }
+        await store.send(.notARockAlertDismissed) { $0.isShowingNotARockAlert = false }
+    }
+
+    func testEasterEggsAlwaysLoseToEveryCatalogRock() {
+        for egg in [RockSpecies.homosapien, .scissors] {
+            for rock in RockSpecies.catalog {
+                XCTAssertLessThan(egg.hardnessValue, rock.hardnessValue, "\(egg.name) must lose to \(rock.name)")
+            }
+        }
+    }
+
     func testCancelingCameraDoesNotStartIdentification() async {
         let store = TestStore(initialState: RockBattleFeature.State()) {
             RockBattleFeature()
@@ -187,6 +271,7 @@ final class RockBattleFeatureTests: XCTestCase {
         var initialState = RockBattleFeature.State()
         initialState.rocks = [rock]
         initialState.stagedRockID = rock.id
+        initialState.isOpponentNearby = true
 
         let store = TestStore(initialState: initialState) {
             RockBattleFeature()
@@ -225,6 +310,7 @@ final class RockBattleFeatureTests: XCTestCase {
         var initialState = RockBattleFeature.State()
         initialState.rocks = [rock]
         initialState.stagedRockID = rock.id
+        initialState.isOpponentNearby = true
 
         let store = TestStore(initialState: initialState) {
             RockBattleFeature()
@@ -261,6 +347,7 @@ final class RockBattleFeatureTests: XCTestCase {
         var initialState = RockBattleFeature.State()
         initialState.rocks = [rock]
         initialState.stagedRockID = rock.id
+        initialState.isOpponentNearby = true
 
         let store = TestStore(initialState: initialState) {
             RockBattleFeature()
@@ -289,6 +376,39 @@ final class RockBattleFeatureTests: XCTestCase {
                 playerWon: true
             )
         }
+    }
+
+    func testNearbyPresenceStreamUpdatesState() async {
+        let store = TestStore(initialState: RockBattleFeature.State()) {
+            RockBattleFeature()
+        } withDependencies: {
+            $0.rockPersistence.fetchAll = { [] }
+            $0.nearbyClient.opponentPresence = {
+                AsyncStream { continuation in
+                    continuation.yield(true)
+                    continuation.yield(false)
+                    continuation.finish()
+                }
+            }
+        }
+
+        await store.send(.onAppear)
+        await store.receive(\.rocksLoaded)
+        await store.receive(\.nearbyUpdated) { $0.isOpponentNearby = true }
+        await store.receive(\.nearbyUpdated) { $0.isOpponentNearby = false }
+    }
+
+    func testBattleButtonTappedWithNoOpponentNearbyDoesNothing() async {
+        let rock = RockRecord.fixture(id: UUID(1))
+        var initialState = RockBattleFeature.State()
+        initialState.rocks = [rock]
+        initialState.stagedRockID = rock.id // staged, but isOpponentNearby stays false
+
+        let store = TestStore(initialState: initialState) {
+            RockBattleFeature()
+        }
+
+        await store.send(.battleButtonTapped)
     }
 
     func testBattleButtonTappedWithNoStagedRockDoesNothing() async {

@@ -46,6 +46,17 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
         }
+        .alert(
+            "That doesn't look like a rock",
+            isPresented: Binding(
+                get: { store.isShowingNotARockAlert },
+                set: { if !$0 { store.send(.notARockAlertDismissed) } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Try another photo with the rock in clear view.")
+        }
         .sheet(
             item: Binding(
                 get: { store.battleResult },
@@ -79,6 +90,10 @@ struct ContentView: View {
         }
     }
 
+    private var isBattleEnabled: Bool {
+        store.stagedRock != nil && store.isOpponentNearby && !store.isBattling
+    }
+
     private var battleButton: some View {
         Button(action: { store.send(.battleButtonTapped) }) {
             HStack(spacing: 12) {
@@ -90,18 +105,26 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 22)
-            .foregroundStyle(store.stagedRock == nil ? Color.rockOnSurfaceVariant.opacity(0.5) : Color.rockBackground)
+            .foregroundStyle(store.isOpponentNearby ? (store.stagedRock == nil ? Color.rockOnSurfaceVariant.opacity(0.5) : Color.rockBackground) : Color.rockOnSurfaceVariant.opacity(0.5))
             .background(battleButtonBackground)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Color.rockPrimary.opacity(store.stagedRock == nil ? 0 : 0.25), radius: 30)
+            .overlay {
+                // Dashed outline marks "no opponent in range" — distinct from the plain grey "nothing staged" state.
+                if !store.isOpponentNearby {
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(Color.rockOutlineVariant, style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
+                }
+            }
+            .shadow(color: Color.rockPrimary.opacity(isBattleEnabled ? 0.25 : 0), radius: 30)
         }
         .buttonStyle(PressableStyle())
-        .disabled(store.stagedRock == nil || store.isBattling)
+        .disabled(!isBattleEnabled)
+        .accessibilityHint(store.isOpponentNearby ? "" : "No opponent nearby")
     }
 
     @ViewBuilder
     private var battleButtonBackground: some View {
-        if store.stagedRock == nil {
+        if !store.isOpponentNearby || store.stagedRock == nil {
             Color.rockSurfaceVariant
         } else {
             LinearGradient(colors: [Color.rockPrimaryDim, Color.rockPrimary], startPoint: .leading, endPoint: .trailing)
